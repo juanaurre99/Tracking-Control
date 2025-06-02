@@ -74,43 +74,47 @@ def run_reservoir_validation(desired_traj_data, model_params, robot_properties, 
 
 
     # --- Main Simulation Loop ---
-    # Loop from t_i = 0 to val_length - 2 to predict states for t_i + 1
-    # This means q_pred, qdt_pred, etc. will be filled up to index val_length - 1
-    for t_i in range(val_length - 1):
+    # Loop from t_i = 0 to val_length - 4 to predict states for t_i + 1, ..., t_i + 3
+    # Consistent with MATLAB's for t_i = 1:val_length-3 (0-indexed: 0 to val_length-4)
+    # This means q_pred, qdt_pred, etc. will be filled up to index val_length - 3
+    for t_i in range(val_length - 3):
         # 1. Construct u (input to reservoir)
         # This depends on input_infor_setup (e.g., ['xy', 'qdt'])
-        # u uses current predicted state and next desired state.
-
-        current_actual_cart_x = data_pred_cartesian[t_i, 0]
-        current_actual_cart_y = data_pred_cartesian[t_i, 1]
-        current_actual_qdt1 = qdt_pred[t_i, 0]
-        current_actual_qdt2 = qdt_pred[t_i, 1]
+        # Aligning with MATLAB training: u = [current_desired_xy, next_desired_xy, current_desired_qdt, next_desired_qdt]
 
         # Index for "next desired state" from control trajectory
-        # MATLAB's time_now+2 (1-based) becomes t_i+1 for 0-based current step t_i,
-        # if "next" means one step ahead of current control target.
-        # Or if it means two steps ahead of current physical step t_i.
-        # The MATLAB code for u: u(3:4)=data_control(time_now+2,:); u(7:8)=qdt_control(time_now+2,:);
-        # If time_now is the current physical step, then time_now+2 is two steps ahead.
-        # Let's use t_i + 1 as the "next" lookahead for desired states.
         idx_desired_next = min(t_i + 1, val_length - 1)
 
         u_list = []
         # The exact construction of 'u' must match how the reservoir was trained.
-        # Assuming typical setup based on provided snippet:
-        # [current_actual_xy, next_desired_xy, current_actual_qdt, next_desired_qdt]
-        if 'xy' in input_infor_setup and 'qdt' in input_infor_setup: # Common case
-            u_list.extend([current_actual_cart_x, current_actual_cart_y])
+        # For input_infor_setup = ['xy', 'qdt'], the order is:
+        # [current_desired_x, current_desired_y, next_desired_x, next_desired_y,
+        #  current_desired_qdt1, current_desired_qdt2, next_desired_qdt1, next_desired_qdt2]
+        if input_infor_setup == ['xy', 'qdt']: # Specific check for the target setup
+            # Current desired XY
+            u_list.extend([data_control_cartesian[t_i, 0], data_control_cartesian[t_i, 1]])
+            # Next desired XY
             u_list.extend([data_control_cartesian[idx_desired_next, 0], data_control_cartesian[idx_desired_next, 1]])
-            u_list.extend([current_actual_qdt1, current_actual_qdt2])
+            # Current desired qdt
+            u_list.extend([qdt_control[t_i, 0], qdt_control[t_i, 1]])
+            # Next desired qdt
             u_list.extend([qdt_control[idx_desired_next, 0], qdt_control[idx_desired_next, 1]])
         # Add more conditions here if input_infor_setup can vary more
+        # For example, if only 'xy' is present, or only 'qdt', or other combinations.
+        # elif input_infor_setup == ['xy']:
+        #     u_list.extend([data_control_cartesian[t_i, 0], data_control_cartesian[t_i, 1]])
+        #     u_list.extend([data_control_cartesian[idx_desired_next, 0], data_control_cartesian[idx_desired_next, 1]])
+        # elif input_infor_setup == ['qdt']:
+        #     u_list.extend([qdt_control[t_i, 0], qdt_control[t_i, 1]])
+        #     u_list.extend([qdt_control[idx_desired_next, 0], qdt_control[idx_desired_next, 1]])
         else:
             # Fallback or error if u construction is not defined for input_infor_setup
-            raise NotImplementedError(f"Input vector 'u' construction not defined for input_infor_setup: {input_infor_setup}")
+            raise NotImplementedError(f"Input vector 'u' construction not defined for input_infor_setup: {input_infor_setup}. Target is ['xy', 'qdt'].")
 
         if len(u_list) != dim_in:
-            raise ValueError(f"Constructed u length {len(u_list)} does not match dim_in {dim_in}")
+            # This check is important. If dim_in is 8 for ['xy', 'qdt'], then len(u_list) must be 8.
+            # If input_infor_setup was different, dim_in might be different (e.g. 4 if only 'xy' or only 'qdt').
+            raise ValueError(f"Constructed u length {len(u_list)} does not match expected dim_in {dim_in} for input_infor_setup {input_infor_setup}")
         u = np.array(u_list).reshape(dim_in, 1)
 
         # 2. Reservoir Update

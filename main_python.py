@@ -23,6 +23,10 @@ def load_matlab_data(filepath):
     try:
         data = scipy.io.loadmat(filepath)
         print("Keys in the loaded .mat file:", data.keys())
+        print(f"Type of data.get('res_infor'): {type(data.get('res_infor'))}")
+        print(f"Content of data.get('res_infor'): {data.get('res_infor')}")
+        print(f"Type of data.get('input_infor'): {type(data.get('input_infor'))}")
+        print(f"Content of data.get('input_infor'): {data.get('input_infor')}")
 
         # Extract variables, handling potential KeyError if a variable is missing
         # MATLAB structs are often loaded as numpy structured arrays or dicts.
@@ -178,6 +182,10 @@ if __name__ == "__main__":
         # sys.exit("Aborting due to missing essential MAT file data.")
     else:
         print("\n--- Successfully Loaded Essential MAT File Data ---")
+        print(f"Type of res_infor_loaded: {type(res_infor_loaded)}")
+        print(f"Content of res_infor_loaded: {res_infor_loaded}")
+        print(f"Type of input_infor_loaded: {type(input_infor_loaded)}")
+        print(f"Content of input_infor_loaded: {input_infor_loaded}")
         print(f"Data dt: {dt_loaded}")
         print(f"Reservoir n: {n_loaded}")
         print(f"Input infor: {input_infor_loaded}")
@@ -272,6 +280,7 @@ if __name__ == "__main__":
                     if inferred_dim > 0: dim_in_for_model = inferred_dim
                     else: dim_in_for_model = 8 # Fallback default
                 else: dim_in_for_model = 8 # Fallback if input_infor also missing
+            print(f"Derived dim_in_for_model: {dim_in_for_model}")
             print(f"Using dim_in: {dim_in_for_model} for reservoir model.")
 
             model_params_for_val = {
