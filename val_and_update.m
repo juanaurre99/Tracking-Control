@@ -55,7 +55,7 @@ end_time=val_length-100;
 if exist('plot_val_and_update','var') == 0
     plot_val_and_update = 0;
 end
-
+plot_val_and_update =1
 if plot_val_and_update==1
     figure();
     hold on

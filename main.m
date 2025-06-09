@@ -4,13 +4,15 @@ clc
 
 addpath('./tools/')
 
-load('./save_file/all_traj_06282022.mat')
+%load('./save_file/all_traj_06282022.mat')
+load('./bayesian_opt/all_traj_06092025_21_7170.mat')
+%load("./choose_file/all_traj_06052025_996_3683.mat")
 
 % choose the reference trajectory
-% traj_type = 'lorenz';
-traj_type = 'circle';
+ traj_type = 'lorenz';
+%traj_type = 'circle';
 % traj_type = 'mg17';
-% traj_type = 'infty';
+%traj_type = 'infty';
 % traj_type = 'fermat';
 % traj_type = 'astroid';
 % traj_type = 'heart';

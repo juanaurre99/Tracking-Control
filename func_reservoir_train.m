@@ -36,6 +36,9 @@ train_y(:,:)=tau(1:train_length,:);
 train_x=train_x';
 train_y=train_y';
 
+
+
+
 r_all=zeros(n,train_length+1);%2*rand(n,1)-1;%
 for ti=1:train_length
     r_all(:,ti+1)=(1-alpha)*r_all(:,ti) + alpha*tanh(res_net*r_all(:,ti)+W_in*train_x(:,ti)+kb*ones(n,1));
